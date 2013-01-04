@@ -2,7 +2,8 @@
 
 require_once('./lib/Stripe.php');
 
-Stripe::setApiKey("Live Private Key Here");
+// Replace "xyz" with your Stripe Secret Live Key //
+Stripe::setApiKey("xyz");
 
 $body = @file_get_contents('php://input');
 $event_json = json_decode($body);
@@ -22,32 +23,27 @@ $currency = $charge->currency;
 if ($event_json->type == 'charge.succeeded') {
 
 $to = $customer->email;
+// Input the subject of the email //
 $subject = "Your payment has been processed: $charge_id ";
 $message = '
-<p> 
-' . date("F j, Y, g:i a") .' EST <br /></p>
-<p>
-  Dear '. $description .',</p>
-<p>
-	This is an automatic email from Company Name, LLC. confirming that your payment has been successfully processed. Many thanks!</p>
+<p> ' . date("F j, Y, g:i a") .' EST <br /></p>
+<p> Dear '. $description .',</p>
+
+<p> 	This is an automatic email from Company Name, LLC. confirming that your payment has been successfully processed.                                         		   Many thanks!</p>
 <p>	This email serves as your official receipt. </p>
-<p> Company Name, LLC. is a California based business with tax ID# : 00-0000000.  </p>
+<p> 	Company Name, LLC. is a California based business with tax ID# : 00-0000000.  </p>
 <hr />
-<p>
-	<strong>Payment Details:</strong></p>
+<p>	<strong>Payment Details:</strong></p>
 <p>
 	Donation Amount: $' . $amount .' ' . $currency .' <br /> 
 	Credit Card:  ' . $type .' <br />
 	Last 4 of CC:  ' . $last4 .'<br />
 	CC Exp. Date:  ' . $exp_month .' / ' . $exp_year .' </p>
-	
-	Donor ID: ' . $customer_id .' <br />
-	Donation ID: ' . $charge_id .' 
+	----
+	Customer ID: ' . $customer_id .' <br />
+	Payment ID: ' . $charge_id .' 
 <hr />
-<p>
-	<strong>We are sincerely grateful for your support!</strong> Please do not hesitate to <a href="http://rfahaiti.org/contact">contact us</a> if you have any questions. If this receipt is for a recurring donation and you would like to cancel your next scheduled recurring donation please submit your request <a href="http://rfahaiti.org/contact">here</a> and include your Donor ID and the last 4 digits of your CC for verification.</p>
-<p>
-	Respectfully,</p>
+<p>	Respectfully,</p>
 <p>
 	Name of Company Representative <br />
 	Position Name <br />
