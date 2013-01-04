@@ -1,0 +1,68 @@
+<?php
+
+require_once('./lib/Stripe.php');
+
+Stripe::setApiKey("Live Private Key Here");
+
+$body = @file_get_contents('php://input');
+$event_json = json_decode($body);
+
+$customer_id = $event_json->data->object->customer;
+$customer = Stripe_Customer::retrieve($customer_id);
+$charge_id = $event_json->data->object->id;
+$charge = Stripe_Charge::retrieve($charge_id);
+$last4 = $charge->card->last4;
+$type = $charge->card->type;
+$exp_month = $charge->card->exp_month;
+$exp_year = $charge->card->exp_year;
+$description = $customer->description;
+$amount = $charge->amount/100;
+$currency = $charge->currency;
+
+if ($event_json->type == 'charge.succeeded') {
+
+$to = $customer->email;
+$subject = "Your payment has been processed: $charge_id ";
+$message = '
+<p> 
+' . date("F j, Y, g:i a") .' EST <br /></p>
+<p>
+  Dear '. $description .',</p>
+<p>
+	This is an automatic email from Company Name, LLC. confirming that your payment has been successfully processed. Many thanks!</p>
+<p>	This email serves as your official receipt. </p>
+<p> Company Name, LLC. is a California based business with tax ID# : 00-0000000.  </p>
+<hr />
+<p>
+	<strong>Payment Details:</strong></p>
+<p>
+	Donation Amount: $' . $amount .' ' . $currency .' <br /> 
+	Credit Card:  ' . $type .' <br />
+	Last 4 of CC:  ' . $last4 .'<br />
+	CC Exp. Date:  ' . $exp_month .' / ' . $exp_year .' </p>
+	
+	Donor ID: ' . $customer_id .' <br />
+	Donation ID: ' . $charge_id .' 
+<hr />
+<p>
+	<strong>We are sincerely grateful for your support!</strong> Please do not hesitate to <a href="http://rfahaiti.org/contact">contact us</a> if you have any questions. If this receipt is for a recurring donation and you would like to cancel your next scheduled recurring donation please submit your request <a href="http://rfahaiti.org/contact">here</a> and include your Donor ID and the last 4 digits of your CC for verification.</p>
+<p>
+	Respectfully,</p>
+<p>
+	Name of Company Representative <br />
+	Position Name <br />
+	email </p>
+<p>
+	Company Name, LLC<br />
+	123 El Camino Real <br />
+	San Jose, CA 95125 <br />
+	<a href="http://website.com/">www.companywebsite.org</a></p>
+';
+
+$headers  = 'MIME-Version: 1.0' . "\r\n";
+$headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
+$headers .= 'From: Company Name, LLC <info@company.com>' . "\r\n";
+$headers .= 'Bcc: name@company.com,' . "\r\n";
+$headers .= 'Reply-To: info@company.com' . "\r\n";
+mail($to, $subject, $message, $headers); 
+}
